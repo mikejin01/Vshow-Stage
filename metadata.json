@@ -1,0 +1,5 @@
+{
+  "name": "Boiler Room 3D Experience",
+  "description": "An interactive 3D map of a Boiler Room style DJ venue. Navigate the dance floor, zoom into the DJ booth, and use Gemini AI to control the lighting and atmosphere.",
+  "requestFramePermissions": []
+}

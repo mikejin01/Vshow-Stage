@@ -267,27 +267,157 @@ const NeonPillar: React.FC<{ position: [number, number, number], color: string }
     )
 }
 
+const Bartender: React.FC<{ position: [number, number, number]; rotation?: number }> = ({ position, rotation = 0 }) => {
+    const skinColor = '#e0ac69';
+    
+    return (
+        <group position={position} rotation={[0, rotation, 0]}>
+            {/* Legs */}
+            <Box args={[0.15, 0.9, 0.15]} position={[-0.1, 0.45, 0]}>
+                <meshStandardMaterial color="#111" roughness={0.8} />
+            </Box>
+            <Box args={[0.15, 0.9, 0.15]} position={[0.1, 0.45, 0]}>
+                <meshStandardMaterial color="#111" roughness={0.8} />
+            </Box>
+            
+            {/* Torso - Black shirt */}
+            <Box args={[0.4, 0.55, 0.2]} position={[0, 1.15, 0]}>
+                <meshStandardMaterial color="#000000" roughness={0.7} />
+            </Box>
+            
+            {/* Head */}
+            <Sphere args={[0.13, 12, 12]} position={[0, 1.6, 0]}>
+                <meshStandardMaterial color={skinColor} roughness={0.5} />
+            </Sphere>
+            
+            {/* Arms - working position */}
+            <Box args={[0.09, 0.45, 0.09]} position={[-0.25, 1.0, 0.15]} rotation={[0.5, 0, 0]}>
+                <meshStandardMaterial color={skinColor} roughness={0.5} />
+            </Box>
+            <Box args={[0.09, 0.45, 0.09]} position={[0.25, 1.0, 0.15]} rotation={[0.5, 0, 0]}>
+                <meshStandardMaterial color={skinColor} roughness={0.5} />
+            </Box>
+            
+            {/* Apron */}
+            <Box args={[0.38, 0.4, 0.02]} position={[0, 1.05, 0.11]}>
+                <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
+            </Box>
+        </group>
+    );
+};
+
+const StandingCustomer: React.FC<{ position: [number, number, number]; rotation?: number }> = ({ position, rotation = 0 }) => {
+    const skinColor = useMemo(() => {
+        const tones = ['#ffdbac', '#f1c27d', '#e0ac69', '#8d5524', '#c68642', '#573719'];
+        return tones[Math.floor(Math.random() * tones.length)];
+    }, []);
+    
+    const shirtColor = useMemo(() => {
+        const colors = ['#eeeeee', '#111111', '#cc3333', '#3333cc', '#ffff33', '#ff6600', '#9933ff'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }, []);
+    
+    return (
+        <group position={position} rotation={[0, rotation, 0]}>
+            {/* Legs */}
+            <Box args={[0.2, 0.85, 0.18]} position={[0, 0.425, 0]}>
+                <meshStandardMaterial color="#1a2a40" roughness={0.8} />
+            </Box>
+            
+            {/* Torso */}
+            <Box args={[0.38, 0.5, 0.2]} position={[0, 1.1, 0]}>
+                <meshStandardMaterial color={shirtColor} roughness={0.7} />
+            </Box>
+            
+            {/* Head */}
+            <Sphere args={[0.12, 12, 12]} position={[0, 1.5, 0]}>
+                <meshStandardMaterial color={skinColor} roughness={0.5} />
+            </Sphere>
+            
+            {/* Arms - one holding drink */}
+            <Box args={[0.08, 0.4, 0.08]} position={[-0.24, 1.05, 0]} rotation={[0.3, 0, 0]}>
+                <meshStandardMaterial color={skinColor} roughness={0.5} />
+            </Box>
+            <Box args={[0.08, 0.4, 0.08]} position={[0.24, 1.15, 0.15]} rotation={[-1.2, 0, 0]}>
+                <meshStandardMaterial color={skinColor} roughness={0.5} />
+            </Box>
+            
+            {/* Drink in hand */}
+            <Cylinder args={[0.03, 0.025, 0.12, 8]} position={[0.24, 1.35, 0.2]}>
+                <meshPhysicalMaterial 
+                    color="#00ffff" 
+                    transparent 
+                    opacity={0.8} 
+                    roughness={0.1}
+                    emissive="#00ffff"
+                    emissiveIntensity={0.3}
+                />
+            </Cylinder>
+        </group>
+    );
+};
+
 const BarArea: React.FC = () => {
     return (
         <group position={[-16, 0, 0]}>
-            {/* Main Bar Structure L-Shape */}
+            {/* ELEVATED PLATFORM FOR BAR AREA (Compact) */}
             <group position={[0, 0, 0]}>
+                {/* Platform Base - Compact size */}
+                <Box args={[6, 0.4, 20]} position={[0, 0.2, 0]} castShadow receiveShadow>
+                    <meshStandardMaterial 
+                        color="#2a2a2a" 
+                        roughness={0.6}
+                        metalness={0.2}
+                    />
+                </Box>
+                {/* Platform Top Surface */}
+                <Box args={[6.2, 0.05, 20.2]} position={[0, 0.425, 0]} receiveShadow>
+                    <meshStandardMaterial 
+                        color="#1a1a1a" 
+                        roughness={0.4}
+                        metalness={0.5}
+                    />
+                </Box>
+                {/* LED Strip - Front edge */}
+                <Box args={[6, 0.04, 0.08]} position={[0, 0.42, 10.1]}>
+                    <meshStandardMaterial 
+                        color={COLORS.BAR} 
+                        emissive={COLORS.BAR} 
+                        emissiveIntensity={2}
+                    />
+                </Box>
+                
+                {/* Steps - Two access points */}
+                {[-2, 2].map((xPos, idx) => (
+                    <group key={idx} position={[xPos, 0, 10.5]}>
+                        <Box args={[1.2, 0.15, 0.5]} position={[0, 0.075, 0]} castShadow receiveShadow>
+                            <meshStandardMaterial color="#222" roughness={0.7} />
+                        </Box>
+                        <Box args={[1.2, 0.3, 0.5]} position={[0, 0.15, 0.6]} castShadow receiveShadow>
+                            <meshStandardMaterial color="#222" roughness={0.7} />
+                        </Box>
+                    </group>
+                ))}
+            </group>
+            
+            {/* Main Bar Structure - On elevated platform */}
+            <group position={[0, 0.45, 0]}>
                 {/* Counter Base */}
-                <Box args={[4, 1.1, 20]} position={[0, 0.55, 0]} castShadow receiveShadow>
-                    <meshStandardMaterial color="#2a2a2a" roughness={0.2} map={null} />
+                <Box args={[2.5, 1.1, 20]} position={[0, 0.55, 0]} castShadow receiveShadow>
+                    <meshStandardMaterial color="#2a2a2a" roughness={0.2} />
                 </Box>
                 {/* Counter Top */}
-                <Box args={[4.5, 0.1, 20.2]} position={[0.25, 1.15, 0]}>
+                <Box args={[3, 0.1, 20.2]} position={[0.15, 1.15, 0]}>
                     <meshStandardMaterial color="#111" metalness={0.9} roughness={0.05} />
                 </Box>
                 {/* Under Counter LED */}
-                <Box args={[4.1, 0.05, 20.1]} position={[0.1, 1.1, 0]}>
+                <Box args={[2.8, 0.05, 20.1]} position={[0.05, 1.1, 0]}>
                     <meshStandardMaterial color={COLORS.BAR} emissive={COLORS.BAR} emissiveIntensity={2} />
                 </Box>
             </group>
             
-            {/* Back Wall Shelving Unit */}
-            <group position={[-3.5, 0, 0]}>
+            {/* Back Wall Shelving Unit - On platform */}
+            <group position={[-3.5, 0.45, 0]}>
                 {/* Back Panel */}
                 <Box args={[1, 4, 20]} position={[0, 2, 0]}>
                     <meshStandardMaterial color="#222" />
@@ -300,20 +430,20 @@ const BarArea: React.FC = () => {
                 ))}
                 
                 {/* Bottles - reduced count for performance */}
-                 {Array.from({ length: 40 }).map((_, i) => (
-                     <Box key={i} args={[0.1, 0.3, 0.1]} position={[0.3, 1.6 + (Math.floor(i/10) * 0.7), (i%10) - 4.5]}>
-                          <meshStandardMaterial 
+                {Array.from({ length: 40 }).map((_, i) => (
+                    <Box key={i} args={[0.1, 0.3, 0.1]} position={[0.3, 1.6 + (Math.floor(i/10) * 0.7), (i%10) - 4.5]}>
+                        <meshStandardMaterial 
                             color={`hsl(${(i * 36) % 360}, 70%, 60%)`} 
                             emissive={`hsl(${(i * 36) % 360}, 70%, 30%)`}
                             emissiveIntensity={0.5}
-                          />
-                     </Box>
-                 ))}
+                        />
+                    </Box>
+                ))}
             </group>
 
             {/* BAR Label - Horizontal above the bar */}
             <Text 
-                position={[0, 2.5, 0]} 
+                position={[0, 3.0, 0]} 
                 rotation={[0, 0, 0]} 
                 color={COLORS.BAR} 
                 fontSize={0.6} 
@@ -327,16 +457,34 @@ const BarArea: React.FC = () => {
                 BAR
             </Text>
             
-            {/* Stools - reduced count */}
+            {/* BARTENDERS - Behind the bar (4 bartenders along the bar) */}
+            {[-7, -2.5, 2.5, 7].map((zPos, idx) => (
+                <Bartender 
+                    key={`bartender-${idx}`}
+                    position={[-1.5, 0.45, zPos]} 
+                    rotation={Math.PI / 2}
+                />
+            ))}
+            
+            {/* STANDING CUSTOMERS - In front of bar (customer side) */}
+            {Array.from({ length: 12 }).map((_, i) => (
+                <StandingCustomer 
+                    key={`customer-${i}`}
+                    position={[3.2, 0.45, (i - 5.5) * 1.6]} 
+                    rotation={-Math.PI / 2}
+                />
+            ))}
+            
+            {/* Bar Stools - Along customer side */}
             {Array.from({ length: 10 }).map((_, i) => (
-                 <group key={i} position={[3, 0, (i - 4.5) * 1.8]}>
+                <group key={i} position={[3, 0.45, (i - 4.5) * 1.8]}>
                     <Cylinder args={[0.25, 0.25, 0.05, 12]} position={[0, 0.8, 0]}>
                         <meshStandardMaterial color="#444" />
                     </Cylinder>
                     <Cylinder args={[0.05, 0.05, 0.8, 6]} position={[0, 0.4, 0]}>
                         <meshStandardMaterial color="#666" metalness={0.8} />
                     </Cylinder>
-                 </group>
+                </group>
             ))}
         </group>
     )
@@ -455,8 +603,8 @@ const VenueMap: React.FC<{ occupancy?: number }> = ({ occupancy = 0 }) => {
       </group>
 
 
-      {/* --- SECTION F --- */}
-      <group position={[-13, 0, 0]}>
+      {/* --- SECTION F (On Bar Elevated Platform) --- */}
+      <group position={[-13, 0.45, 0]}>
           <LuxuryBooth position={[0, 0, -2]} rotation={[0, Math.PI/2, 0]} label="F1" color={COLORS.PINK} occupancy={occupancy} />
           <LuxuryBooth position={[0, 0, 1]} rotation={[0, Math.PI/2, 0]} label="F2" color={COLORS.PINK} occupancy={occupancy} />
           {/* Fillers */}

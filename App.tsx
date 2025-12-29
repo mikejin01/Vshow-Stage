@@ -90,6 +90,9 @@ const App: React.FC = () => {
                 <p className="text-[10px] font-mono text-gray-400 uppercase tracking-[0.3em] ml-1">
                 Venue Planner v2.0
                 </p>
+                <p className="text-[9px] font-mono text-gray-500 tracking-wide ml-1 mt-0.5">
+                Developed by Mike Jin
+                </p>
             </div>
 
             {/* Glass Control Panel */}

@@ -8,9 +8,10 @@ interface CrowdProps {
   vibeIntensity: number;
   stageRadius: number; // Exclusion radius for the center
   isBoilerRoomMode: boolean;
+  closedSections: string[];
 }
 
-const MAX_CROWD = 500;
+const MAX_CROWD = 300;
 
 // --- PALETTES ---
 const SKIN_TONES = [
@@ -37,7 +38,7 @@ const HAIR_COLORS = [
   '#808080', // Gray
 ];
 
-const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBoilerRoomMode }) => {
+const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBoilerRoomMode, closedSections }) => {
   // Refs for each body part
   const headRef = useRef<THREE.InstancedMesh>(null);
   const torsoRef = useRef<THREE.InstancedMesh>(null);
@@ -58,64 +59,156 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
   const crowdData = useMemo(() => {
     const temp: CrowdMember[] = [];
     
+    // REDESIGNED DISTRIBUTION:
+    // Standard Mode: 15% of customers are on dance floor
+    // Boiler Room: 40-60% of customers are on dance floor (using 50% as average)
+    const danceFloorPercentage = isBoilerRoomMode ? 0.50 : 0.15;
+    const danceFloorCount = Math.floor(count * danceFloorPercentage);
+    const venueCount = count - danceFloorCount;
+    
+    // Adjust radius based on mode
+    // Standard: Larger spread around main stage
+    // Boiler Room: Very tight around DJ booth for intimate feel
+    const danceFloorRadius = isBoilerRoomMode ? 5.0 : 7.0;
+    
+    // Generate DANCE FLOOR crowd (near DJ/stage)
     let attempts = 0;
-    while (temp.length < MAX_CROWD && attempts < MAX_CROWD * 5) {
-      // Random position in the room
-      const x = (Math.random() - 0.5) * 40;
-      const z = (Math.random() - 0.5) * 30;
-      const dist = Math.sqrt(x*x + z*z);
+    while (temp.length < danceFloorCount && attempts < danceFloorCount * 10) {
+      const angle = Math.random() * Math.PI * 2;
+      
+      // Distribution pattern differs by mode:
+      // Boiler Room: Very concentrated near center (power 1.2 = tighter)
+      // Standard: More spread out (power 0.5 = wider distribution)
+      const radiusPower = isBoilerRoomMode ? 1.2 : 0.5;
+      const radiusFactor = Math.pow(Math.random(), radiusPower);
+      const radius = radiusFactor * danceFloorRadius;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
 
-      // --- COLLISION / EXCLUSION LOGIC ---
       let valid = true;
       
-      // 1. Stage Collision
+      // Stage exclusion for dance floor area
       if (isBoilerRoomMode) {
-          // Center Boiler Room stage
-          if (dist < stageRadius) valid = false;
+          // Center Boiler Room stage - very close allowed for intimate feel
+          const dist = Math.sqrt(x*x + z*z);
+          if (dist < stageRadius + 0.2) valid = false; // Only 0.2m buffer
           
-          // Permanent stage between E1 and D10 at z=-9
-          // Stage dimensions: width=6, depth=3.5, centered at [0, 0, -9]
-          // With some buffer: X[-3.5, 3.5], Z[-11, -7]
-          if (x > -3.5 && x < 3.5 && z > -11 && z < -7) valid = false;
-          
-          // No customers behind the stage (z < -11)
-          if (z < -11) valid = false;
+          // Permanent stage at LED screen - larger exclusion
+          // Stage dimensions: 9m width, 5m depth, centered at [0, 0, -9]
+          if (x > -5 && x < 5 && z > -12 && z < -6) valid = false;
       } else {
-          // Standard Mode Stage at z=-9
-          // Stage dimensions: width=6, depth=3.5, centered at [0,0,-9]
-          // With some buffer: X[-3.5, 3.5], Z[-11, -7] (same as boiler room)
-          if (x > -3.5 && x < 3.5 && z > -11 && z < -7) valid = false;
-          
-          // No customers behind the stage (z < -11)
-          if (z < -11) valid = false;
+          // Standard Mode Stage at LED screen - larger exclusion
+          if (x > -5 && x < 5 && z > -12 && z < -6) valid = false;
       }
       
-      // 2. Room Bounds
-      if (x < -28 || x > 28 || z < -28 || z > 28) valid = false;
-      // 3. Furniture Exclusion
-      if (x < -4 && z < -7) valid = false; // E
-      if (x > 4 && z < -7) valid = false;  // D
-      if (x > 12) valid = false;           // Right Wall
-      if (z > 4 && z < 10 && Math.abs(x) < 8) valid = false; // B
-      if (z > 11) valid = false;           // A
-      if (x < -13) valid = false;          // Bar
+      // Don't go behind the LED screen
+      if (z < -12) valid = false;
 
       if (valid) {
         temp.push({
           position: [x, 0, z],
-          height: 1 + Math.random() * 0.15, // Scaling factor for height
+          height: 1 + Math.random() * 0.15,
           offset: Math.random() * 100,
           skinColor: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)],
           shirtColor: SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)],
           pantsColor: PANTS_COLORS[Math.floor(Math.random() * PANTS_COLORS.length)],
           hairColor: HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)],
-          hairStyle: Math.floor(Math.random() * 4), // 0-3 for different styles
+          hairStyle: Math.floor(Math.random() * 4),
         });
       }
       attempts++;
     }
+    
+    // Generate VENUE crowd (tables, bar, periphery)
+    attempts = 0;
+    while (temp.length < count && attempts < venueCount * 10) {
+      // Random positioning throughout entire venue
+      const x = (Math.random() - 0.5) * 40; // -20 to 20
+      const z = (Math.random() - 0.5) * 32; // -16 to 16
+      const dist = Math.sqrt(x*x + z*z);
+
+      let valid = true;
+      
+      // Skip dance floor area (already filled) - adjust based on mode
+      // Standard: Larger exclusion around stage (7.5m) since fewer on dance floor
+      // Boiler Room: Smaller exclusion (5.5m) to pack them tighter
+      const danceFloorExclusionRadius = isBoilerRoomMode ? 5.5 : 7.5;
+      if (dist < danceFloorExclusionRadius) valid = false;
+      
+      // Stage Collision - LARGER EXCLUSION ZONES
+      if (isBoilerRoomMode) {
+          // Center Boiler Room stage - smaller buffer
+          if (dist < stageRadius + 0.8) valid = false;
+          
+          // Permanent stage at LED screen - LARGER buffer
+          if (x > -5.5 && x < 5.5 && z > -13 && z < -5.5) valid = false;
+          
+          // No customers behind the stage or LED screen
+          if (z < -13) valid = false;
+      } else {
+          // Standard Mode Stage - LARGER buffer
+          if (x > -5.5 && x < 5.5 && z > -13 && z < -5.5) valid = false;
+          
+          // No customers behind the stage or LED screen
+          if (z < -13) valid = false;
+      }
+      
+      // Room Bounds
+      if (x < -18 || x > 18 || z < -15 || z > 15) valid = false;
+      
+      // Furniture Exclusion (booths, bar, etc.)
+      if (x < -6 && z < -5) valid = false;  // E section
+      if (x > 6 && z < -5) valid = false;   // D section
+      if (x > 13) valid = false;            // Right Wall (D side)
+      if (z > 4.5 && z < 10.5 && Math.abs(x) < 6) valid = false; // B section (rows 14-17)
+      if (z > 10.5) valid = false;            // A section
+      if (x < -12) valid = false;           // Bar area
+      
+      // Closed Sections Exclusion - Match exact platform dimensions
+      if (closedSections.includes('A')) {
+        // Section A Platform: [0, 0, 11.25], size [15, 0.6, 3.5]
+        // X: -7.5 to 7.5, Z: 9.5 to 13
+        if (z > 9 && z < 13.5 && Math.abs(x) < 8) valid = false;
+      }
+      if (closedSections.includes('B')) {
+        // Section B Platform: [0, 0, 7.5], size [12, 0.3, 6]
+        // X: -6 to 6, Z: 4.5 to 10.5
+        if (z > 4 && z < 11 && Math.abs(x) < 6.5) valid = false;
+      }
+      if (closedSections.includes('D')) {
+        // Section D Platform (L-shaped):
+        // Horizontal: [8.5, 0, -9], size [8, 0.3, 3] → X: 4.5 to 12.5, Z: -10.5 to -7.5
+        // Vertical: [13.5, 0, -1.5], size [4, 0.3, 11.5] → X: 11.5 to 15.5, Z: -7.25 to 4.25
+        const inHorizontal = x > 4.5 && x < 12.5 && z > -10.5 && z < -7.5;
+        const inVertical = x > 11.5 && x < 15.5 && z > -7.25 && z < 4.25;
+        if (inHorizontal || inVertical) valid = false;
+      }
+      if (closedSections.includes('E')) {
+        // Section E Platform (L-shaped):
+        // Horizontal: [-8.5, 0, -9], size [8, 0.3, 3] → X: -12.5 to -4.5, Z: -10.5 to -7.5
+        // Vertical: [-14.25, 0, -6], size [3, 0.3, 3] → X: -15.75 to -12.75, Z: -7.5 to -4.5
+        const inHorizontal = x < -4.5 && x > -12.5 && z > -10.5 && z < -7.5;
+        const inVertical = x < -12.75 && x > -15.75 && z > -7.5 && z < -4.5;
+        if (inHorizontal || inVertical) valid = false;
+      }
+
+      if (valid) {
+        temp.push({
+          position: [x, 0, z],
+          height: 1 + Math.random() * 0.15,
+          offset: Math.random() * 100,
+          skinColor: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)],
+          shirtColor: SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)],
+          pantsColor: PANTS_COLORS[Math.floor(Math.random() * PANTS_COLORS.length)],
+          hairColor: HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)],
+          hairStyle: Math.floor(Math.random() * 4),
+        });
+      }
+      attempts++;
+    }
+    
     return temp;
-  }, [stageRadius, isBoilerRoomMode]); 
+  }, [count, stageRadius, isBoilerRoomMode, closedSections]); 
 
   // Apply colors to instances
   useLayoutEffect(() => {
@@ -163,9 +256,9 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
     const jumpSpeed = 8 + (vibeIntensity * 3); 
     const isHighEnergy = vibeIntensity > 1.2;
 
-    crowdData.forEach((member, i) => {
-      // Hide excess instances
-      if (i >= count) {
+    for (let i = 0; i < MAX_CROWD; i++) {
+      // Hide instances if they are beyond the current count or if data hasn't been generated for them
+      if (i >= count || i >= crowdData.length) {
           dummy.scale.set(0, 0, 0);
           dummy.updateMatrix();
           headRef.current!.setMatrixAt(i, dummy.matrix);
@@ -176,8 +269,10 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
           armRRef.current!.setMatrixAt(i, dummy.matrix);
           hairRef.current!.setMatrixAt(i, dummy.matrix);
           neckRef.current!.setMatrixAt(i, dummy.matrix);
-          return;
+          continue;
       }
+
+      const member = crowdData[i];
 
       // --- DANCE MATH ---
       // Base bounce
@@ -320,7 +415,7 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       dummy.rotation.set(torsoRot.x + rightArmRotX, baseRotY, rightArmRotZ);
       dummy.updateMatrix();
       armRRef.current!.setMatrixAt(i, dummy.matrix);
-    });
+    }
 
     headRef.current.instanceMatrix.needsUpdate = true;
     torsoRef.current.instanceMatrix.needsUpdate = true;

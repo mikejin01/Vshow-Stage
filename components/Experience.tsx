@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import DJBooth from './DJBooth';
 import VenueMap from './VenueMap';
 import Crowd from './Crowd';
+import MainStage from './MainStage';
+import BoilerRoomPlatform from './BoilerRoomPlatform';
 import { VibeConfig } from '../types';
 
 interface ExperienceProps {
@@ -12,6 +14,8 @@ interface ExperienceProps {
   crowdDensity: number;
   isBoilerRoomMode: boolean;
   brightness: number;
+  designMode: boolean;
+  closedSections: string[];
 }
 
 const Lights: React.FC<{ vibe: VibeConfig; targetPosition: [number, number, number]; brightness: number }> = ({ vibe, targetPosition, brightness }) => {
@@ -33,7 +37,7 @@ const Lights: React.FC<{ vibe: VibeConfig; targetPosition: [number, number, numb
   const [ceilingTarget2] = useState(() => new THREE.Object3D());
   
   // House light intensity derived from brightness toggle
-  const houseIntensity = brightness * 0.6;
+  const houseIntensity = brightness * 1.5; // Increased from 0.6
   const isDarkMode = brightness < 0.1;
   
   useFrame(({ clock }) => {
@@ -106,10 +110,10 @@ const Lights: React.FC<{ vibe: VibeConfig; targetPosition: [number, number, numb
   return (
     <>
       {/* --- BASE LIGHTING (Always present but brighter) --- */}
-      <ambientLight intensity={0.5 + (brightness * 0.5)} color={brightness > 0.1 ? "#ffffff" : "#404040"} />
+      <ambientLight intensity={1.2 + (brightness * 0.8)} color={brightness > 0.1 ? "#ffffff" : "#404040"} />
       <hemisphereLight 
-        intensity={0.5 + (brightness * 0.4)} 
-        groundColor={brightness > 0.1 ? "#555555" : "#151515"} 
+        intensity={1.0 + (brightness * 0.6)} 
+        groundColor={brightness > 0.1 ? "#888888" : "#151515"} 
         color={brightness > 0.1 ? "#ffffff" : "#333333"} 
       />
       
@@ -238,24 +242,39 @@ const Lights: React.FC<{ vibe: VibeConfig; targetPosition: [number, number, numb
       {/* --- HOUSE LIGHTS (When brightness is ON) --- */}
       {brightness > 0.1 && (
         <group>
-            {/* Center Wash */}
-            <pointLight position={[0, 16, 0]} intensity={houseIntensity * 1.2} distance={50} decay={2} color="#fff8e8" />
+            {/* Center Wash - Extremely high distance to illuminate the whole venue */}
+            <pointLight position={[0, 20, 0]} intensity={houseIntensity * 2.0} distance={100} decay={1} color="#ffffff" />
             
-            {/* Corner Fills - reduced from 4 to 2 for performance */}
-            <pointLight position={[-15, 12, 0]} intensity={houseIntensity * 0.8} distance={40} decay={2} color="#fff5e6" />
-            <pointLight position={[15, 12, 0]} intensity={houseIntensity * 0.8} distance={40} decay={2} color="#fff5e6" />
+            {/* Wide Area Fills - Positioned high and wide to prevent dark corners */}
+            <pointLight position={[-25, 18, -20]} intensity={houseIntensity * 1.2} distance={80} decay={1.5} color="#ffffff" />
+            <pointLight position={[25, 18, -20]} intensity={houseIntensity * 1.2} distance={80} decay={1.5} color="#ffffff" />
+            <pointLight position={[-25, 18, 20]} intensity={houseIntensity * 1.2} distance={80} decay={1.5} color="#ffffff" />
+            <pointLight position={[25, 18, 20]} intensity={houseIntensity * 1.2} distance={80} decay={1.5} color="#ffffff" />
+            
+            {/* Floor Bounce - Upward light to illuminate underside of models */}
+            <pointLight position={[0, -2, 0]} intensity={houseIntensity * 0.5} distance={50} decay={2} color="#ffffff" />
         </group>
       )}
     </>
   );
 };
 
-const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoomMode, brightness }) => {
+const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoomMode, brightness, designMode, closedSections }) => {
   console.log('🎬 Experience component rendering...', { crowdDensity, isBoilerRoomMode, brightness });
   
   const [glStatus, setGlStatus] = useState<'ok' | 'lost'>('ok');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+
+  // Handle window resize for mobile detection and camera adjustment
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Detach WebGL event listeners on unmount
   useEffect(() => {
@@ -270,9 +289,23 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
 
   const stagePosition: [number, number, number] = isBoilerRoomMode ? [0, 0, 0] : [0, 0, -9];
   const stageRotation: [number, number, number] = [0, Math.PI, 0];
+
+  // Camera settings based on device
+  const cameraPosition: [number, number, number] = isMobile ? [0, 30, 50] : [0, 15, 30];
+  const cameraFov = isMobile ? 45 : 50;
+
+  // Separate sizing: keep LED-wall stage larger, boiler-room pad smaller
+  // Larger LED-wall stage (next to E1/D10), smaller boiler pad centered on K–N range
+  const MAIN_STAGE = { width: 9.0, depth: 5.0, height: 0.6 };
+  const BOILER_STAGE = { width: 3.5, depth: 2.0, height: 0.6 };
+  const activeStage = isBoilerRoomMode ? BOILER_STAGE : MAIN_STAGE;
+
+  const stepX = (activeStage.width / 2) - 0.5;
+  const stepFront1 = activeStage.depth / 2 + 0.35;
+  const stepFront2 = activeStage.depth / 2 + 0.9;
   
   // Brighter background when house lights are on
-  const bgColor = brightness > 0.1 ? '#151515' : vibe.fogColor;
+  const bgColor = brightness > 0.1 ? '#333333' : vibe.fogColor;
 
   console.log('🎭 Stage setup:', { stagePosition, bgColor });
 
@@ -331,11 +364,11 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
           };
         }}
       >
-      {/* Optimized fog settings to reduce visual artifacts */}
-      <fog attach="fog" args={[bgColor, brightness > 0.1 ? 40 : 20, brightness > 0.1 ? 80 : 60]} />
+      {/* Optimized fog settings: pushed much further back in bright mode to avoid darkening the zoomed-out view */}
+      <fog attach="fog" args={[bgColor, brightness > 0.1 ? 150 : 20, brightness > 0.1 ? 300 : 60]} />
       <color attach="background" args={[bgColor]} />
 
-      <PerspectiveCamera makeDefault position={[0, 15, 30]} fov={50} near={0.5} far={200} />
+      <PerspectiveCamera makeDefault position={cameraPosition} fov={cameraFov} near={0.5} far={200} />
       
       <OrbitControls 
         makeDefault
@@ -354,87 +387,48 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
       <Lights vibe={vibe} targetPosition={stagePosition} brightness={brightness} />
 
       <group>
-        <VenueMap occupancy={crowdDensity} />
+        <VenueMap occupancy={crowdDensity} designMode={designMode} closedSections={closedSections} />
         
-        {/* BOILER ROOM MODE: Permanent Black Stage between E1 and D10 */}
+        {/* PERMANENT MAIN STAGE: Always at LED screen (E1/D10), regardless of mode */}
         {isBoilerRoomMode && (
           <group position={[0, 0, -9]}>
-            {/* Main Stage Platform */}
-            <Box args={[6, 0.6, 3.5]} position={[0, 0.3, 0]} castShadow receiveShadow>
-              <meshStandardMaterial 
-                color="#0a0a0a" 
-                roughness={0.5}
-                metalness={0.4}
-              />
-            </Box>
-            {/* Stage Front Edge Trim */}
-            <Box args={[6, 0.08, 0.1]} position={[0, 0.64, 1.8]}>
-              <meshStandardMaterial 
-                color="#000000" 
-                roughness={0.3}
-                metalness={0.8}
-              />
-            </Box>
-            {/* Stage Steps - Left */}
-            <Box args={[1.2, 0.15, 0.6]} position={[-2.5, 0.075, 2]} castShadow receiveShadow>
-              <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-            </Box>
-            <Box args={[1.2, 0.3, 0.6]} position={[-2.5, 0.15, 2.6]} castShadow receiveShadow>
-              <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-            </Box>
-            {/* Stage Steps - Right */}
-            <Box args={[1.2, 0.15, 0.6]} position={[2.5, 0.075, 2]} castShadow receiveShadow>
-              <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-            </Box>
-            <Box args={[1.2, 0.3, 0.6]} position={[2.5, 0.15, 2.6]} castShadow receiveShadow>
-              <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-            </Box>
+            <MainStage 
+              width={MAIN_STAGE.width} 
+              depth={MAIN_STAGE.depth} 
+              height={MAIN_STAGE.height} 
+            />
           </group>
         )}
         
-        {/* DYNAMIC STAGE PLACEMENT (Standard Mode or Center Boiler Room) */}
+        {/* DYNAMIC CENTER STAGE (Standard Mode = MainStage, Boiler Room Mode = BoilerRoomPlatform) */}
         <group position={stagePosition} rotation={stageRotation}>
-             {/* The Stage Platform - Same size as boiler room stage */}
-             <Box args={[6, 0.6, 3.5]} position={[0, 0.3, 0]} castShadow receiveShadow>
-                <meshStandardMaterial 
-                  color="#1a1a1a" 
-                  roughness={0.7}
-                  metalness={0.3}
-                />
-             </Box>
-             {/* Stage Front Edge Trim */}
-             <Box args={[6, 0.08, 0.1]} position={[0, 0.64, 1.8]} castShadow receiveShadow>
-                 <meshStandardMaterial 
-                   color="#0d0d0d"
-                   roughness={0.3}
-                   metalness={0.8}
-                 />
-             </Box>
-             {/* Stage Steps - Left */}
-             <Box args={[1.2, 0.15, 0.6]} position={[-2.5, 0.075, 2]} castShadow receiveShadow>
-               <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-             </Box>
-             <Box args={[1.2, 0.3, 0.6]} position={[-2.5, 0.15, 2.6]} castShadow receiveShadow>
-               <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-             </Box>
-             {/* Stage Steps - Right */}
-             <Box args={[1.2, 0.15, 0.6]} position={[2.5, 0.075, 2]} castShadow receiveShadow>
-               <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-             </Box>
-             <Box args={[1.2, 0.3, 0.6]} position={[2.5, 0.15, 2.6]} castShadow receiveShadow>
-               <meshStandardMaterial color="#0d0d0d" roughness={0.7} />
-             </Box>
+            {isBoilerRoomMode ? (
+              // Center stage in Boiler Room mode - use compact BoilerRoomPlatform
+              <BoilerRoomPlatform 
+                width={BOILER_STAGE.width} 
+                depth={BOILER_STAGE.depth} 
+                height={BOILER_STAGE.height} 
+              />
+            ) : (
+              // Standard mode - use MainStage with professional design
+              <MainStage 
+                width={MAIN_STAGE.width} 
+                depth={MAIN_STAGE.depth} 
+                height={MAIN_STAGE.height} 
+              />
+            )}
              
-             <group position={[0, 0.6, 0]}>
-                <DJBooth />
-             </group>
+            <group position={[0, 0.6, 0]} scale={isBoilerRoomMode ? 0.8 : 1}>
+               <DJBooth />
+            </group>
         </group>
 
         <Crowd 
           density={crowdDensity} 
           vibeIntensity={vibe.intensity} 
-          stageRadius={3.5} 
+          stageRadius={isBoilerRoomMode ? 2.0 : 3.5}
           isBoilerRoomMode={isBoilerRoomMode}
+          closedSections={closedSections}
         />
 
         <ContactShadows 

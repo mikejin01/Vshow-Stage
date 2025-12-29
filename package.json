@@ -1,25 +1,28 @@
 {
-  "name": "boiler-room-3d-experience",
+  "name": "vshow-stage-venue-planner",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "@google/genai": "^1.33.0",
-    "@react-three/fiber": "^9.4.2",
-    "three": "^0.182.0",
-    "@react-three/drei": "^10.7.7"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@google/generative-ai": "^0.1.3",
+    "@react-three/fiber": "^8.15.0",
+    "three": "^0.160.0",
+    "@react-three/drei": "^9.96.0"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/three": "^0.160.0",
+    "@types/node": "^20.11.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10"
   }
 }

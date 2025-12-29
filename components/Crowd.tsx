@@ -10,7 +10,7 @@ interface CrowdProps {
   isBoilerRoomMode: boolean;
 }
 
-const MAX_CROWD = 400;
+const MAX_CROWD = 500;
 
 // --- PALETTES ---
 const SKIN_TONES = [
@@ -27,24 +27,29 @@ const PANTS_COLORS = [
   '#3e2723', // Brown
   '#5d4037', // Khaki
 ];
+const HAIR_COLORS = [
+  '#1a1a1a', // Black
+  '#2c1810', // Dark Brown
+  '#5c3a21', // Brown
+  '#8b5a3c', // Light Brown
+  '#d4a574', // Blonde
+  '#b55239', // Red
+  '#808080', // Gray
+];
 
 const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBoilerRoomMode }) => {
   // Refs for each body part
   const headRef = useRef<THREE.InstancedMesh>(null);
   const torsoRef = useRef<THREE.InstancedMesh>(null);
-  const legsRef = useRef<THREE.InstancedMesh>(null);
+  const legLRef = useRef<THREE.InstancedMesh>(null);
+  const legRRef = useRef<THREE.InstancedMesh>(null);
   const armLRef = useRef<THREE.InstancedMesh>(null);
   const armRRef = useRef<THREE.InstancedMesh>(null);
+  const hairRef = useRef<THREE.InstancedMesh>(null);
+  const neckRef = useRef<THREE.InstancedMesh>(null);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colorHelper = useMemo(() => new THREE.Color(), []);
-
-  // Pre-calculate arm geometry with pivot adjustment
-  const armGeometry = useMemo(() => {
-    const geo = new THREE.BoxGeometry(0.11, 0.65, 0.11);
-    geo.translate(0, -0.3, 0); // Move pivot to top (shoulder)
-    return geo;
-  }, []);
 
   // Calculate actual count based on density
   const count = Math.floor(density * MAX_CROWD);
@@ -65,13 +70,24 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       
       // 1. Stage Collision
       if (isBoilerRoomMode) {
-          // Center Boiler Room
+          // Center Boiler Room stage
           if (dist < stageRadius) valid = false;
+          
+          // Permanent stage between E1 and D10 at z=-9
+          // Stage dimensions: width=6, depth=3.5, centered at [0, 0, -9]
+          // With some buffer: X[-3.5, 3.5], Z[-11, -7]
+          if (x > -3.5 && x < 3.5 && z > -11 && z < -7) valid = false;
+          
+          // No customers behind the stage (z < -11)
+          if (z < -11) valid = false;
       } else {
-          // Standard Stage Logic (Updated for position z = -9)
-          // Stage is approx width=4.5, depth=3 centered at [0,0,-9]
-          // Bounds: X[-2.5, 2.5], Z[-10.5, -7.5]
-          if (x > -3 && x < 3 && z > -11 && z < -7) valid = false;
+          // Standard Mode Stage at z=-9
+          // Stage dimensions: width=6, depth=3.5, centered at [0,0,-9]
+          // With some buffer: X[-3.5, 3.5], Z[-11, -7] (same as boiler room)
+          if (x > -3.5 && x < 3.5 && z > -11 && z < -7) valid = false;
+          
+          // No customers behind the stage (z < -11)
+          if (z < -11) valid = false;
       }
       
       // 2. Room Bounds
@@ -92,6 +108,8 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
           skinColor: SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)],
           shirtColor: SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)],
           pantsColor: PANTS_COLORS[Math.floor(Math.random() * PANTS_COLORS.length)],
+          hairColor: HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)],
+          hairStyle: Math.floor(Math.random() * 4), // 0-3 for different styles
         });
       }
       attempts++;
@@ -101,14 +119,20 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
 
   // Apply colors to instances
   useLayoutEffect(() => {
-    if (!headRef.current || !torsoRef.current || !legsRef.current || !armLRef.current || !armRRef.current) return;
+    if (!headRef.current || !torsoRef.current || !legLRef.current || !legRRef.current || 
+        !armLRef.current || !armRRef.current || !hairRef.current || !neckRef.current) return;
 
     crowdData.forEach((member, i) => {
       // Skin
       colorHelper.set(member.skinColor);
       headRef.current!.setColorAt(i, colorHelper);
-      armLRef.current!.setColorAt(i, colorHelper); // Arms are skin (short sleeves)
+      neckRef.current!.setColorAt(i, colorHelper);
+      armLRef.current!.setColorAt(i, colorHelper);
       armRRef.current!.setColorAt(i, colorHelper);
+
+      // Hair
+      colorHelper.set(member.hairColor);
+      hairRef.current!.setColorAt(i, colorHelper);
 
       // Shirt
       colorHelper.set(member.shirtColor);
@@ -116,19 +140,24 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
 
       // Pants
       colorHelper.set(member.pantsColor);
-      legsRef.current!.setColorAt(i, colorHelper);
+      legLRef.current!.setColorAt(i, colorHelper);
+      legRRef.current!.setColorAt(i, colorHelper);
     });
 
     headRef.current.instanceColor!.needsUpdate = true;
     torsoRef.current.instanceColor!.needsUpdate = true;
-    legsRef.current.instanceColor!.needsUpdate = true;
+    legLRef.current.instanceColor!.needsUpdate = true;
+    legRRef.current.instanceColor!.needsUpdate = true;
     armLRef.current.instanceColor!.needsUpdate = true;
     armRRef.current.instanceColor!.needsUpdate = true;
+    hairRef.current.instanceColor!.needsUpdate = true;
+    neckRef.current.instanceColor!.needsUpdate = true;
   }, [crowdData, colorHelper]);
 
   // ANIMATION LOOP
   useFrame(({ clock }) => {
-    if (!headRef.current || !torsoRef.current) return;
+    if (!headRef.current || !torsoRef.current || !legLRef.current || !legRRef.current || 
+        !armLRef.current || !armRRef.current || !hairRef.current || !neckRef.current) return;
     
     const time = clock.getElapsedTime();
     const jumpSpeed = 8 + (vibeIntensity * 3); 
@@ -141,9 +170,12 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
           dummy.updateMatrix();
           headRef.current!.setMatrixAt(i, dummy.matrix);
           torsoRef.current!.setMatrixAt(i, dummy.matrix);
-          legsRef.current!.setMatrixAt(i, dummy.matrix);
+          legLRef.current!.setMatrixAt(i, dummy.matrix);
+          legRRef.current!.setMatrixAt(i, dummy.matrix);
           armLRef.current!.setMatrixAt(i, dummy.matrix);
           armRRef.current!.setMatrixAt(i, dummy.matrix);
+          hairRef.current!.setMatrixAt(i, dummy.matrix);
+          neckRef.current!.setMatrixAt(i, dummy.matrix);
           return;
       }
 
@@ -160,20 +192,35 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       const posZ = member.position[2];
       const posY = yOffset; // Ground level displacement
 
-      // --- 1. LEGS ---
-      // Legs are static relative to body, just moving up/down with bounce
-      dummy.scale.set(1, member.height, 1);
-      dummy.position.set(posX, 0.45 * member.height + posY, posZ);
-      dummy.rotation.set(0, baseRotY, 0);
-      dummy.updateMatrix();
-      legsRef.current!.setMatrixAt(i, dummy.matrix);
+      // Hip width for leg separation
+      const hipWidth = 0.08;
+      const hipX = Math.cos(baseRotY) * hipWidth;
+      const hipZ = Math.sin(baseRotY) * hipWidth;
 
-      // --- 2. TORSO ---
+      // --- 1. LEFT LEG ---
+      // Capsule height = 0.75, so center to bottom = 0.375
+      const legLRotX = Math.sin(time * 6 + member.offset) * 0.3;
+      const legLength = 0.75 + (0.065 * 2); // capsule length + cap radii
+      dummy.scale.set(1, member.height, 1);
+      dummy.position.set(posX - hipX, (legLength / 2 * member.height) + posY, posZ + hipZ);
+      dummy.rotation.set(legLRotX, baseRotY, 0);
+      dummy.updateMatrix();
+      legLRef.current!.setMatrixAt(i, dummy.matrix);
+
+      // --- 2. RIGHT LEG ---
+      const legRRotX = Math.sin(time * 6 + member.offset + Math.PI) * 0.3;
+      dummy.position.set(posX + hipX, (legLength / 2 * member.height) + posY, posZ - hipZ);
+      dummy.rotation.set(legRRotX, baseRotY, 0);
+      dummy.updateMatrix();
+      legRRef.current!.setMatrixAt(i, dummy.matrix);
+
+      // --- 3. TORSO ---
       // Sits on top of legs
-      const torsoY = (0.9 * member.height) + 0.25 + posY;
-      dummy.scale.set(1, 1, 1); // Torso usually standard size
+      const torsoHeight = 0.35 + (0.18 * 2); // capsule length + cap radii
+      const torsoY = (legLength * member.height) + (torsoHeight / 2) + posY;
+      dummy.scale.set(1, 1, 1);
       dummy.position.set(posX, torsoY, posZ);
-      dummy.rotation.set(Math.sin(time * 4 + member.offset) * 0.05, baseRotY, 0); // Slight chest heave
+      dummy.rotation.set(Math.sin(time * 4 + member.offset) * 0.05, baseRotY, 0);
       dummy.updateMatrix();
       torsoRef.current!.setMatrixAt(i, dummy.matrix);
 
@@ -181,8 +228,20 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       const torsoPos = dummy.position.clone();
       const torsoRot = dummy.rotation.clone();
 
-      // --- 3. HEAD ---
-      dummy.position.set(posX, torsoY + 0.35, posZ);
+      // --- 4. NECK ---
+      const neckHeight = 0.15;
+      const neckY = torsoY + (torsoHeight / 2) + (neckHeight / 2);
+      dummy.scale.set(0.8, 1, 0.8);
+      dummy.position.set(posX, neckY, posZ);
+      dummy.rotation.set(0, baseRotY, 0);
+      dummy.updateMatrix();
+      neckRef.current!.setMatrixAt(i, dummy.matrix);
+
+      // --- 5. HEAD ---
+      const headRadius = 0.13;
+      const headY = neckY + (neckHeight / 2) + headRadius;
+      dummy.scale.set(1, 1, 1);
+      dummy.position.set(posX, headY, posZ);
       dummy.rotation.set(
           Math.sin(time * 2 + member.offset) * 0.1, // Look up/down slightly
           baseRotY + Math.sin(time * 1.5) * 0.2,    // Look around
@@ -191,10 +250,55 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       dummy.updateMatrix();
       headRef.current!.setMatrixAt(i, dummy.matrix);
 
-      // --- 4. ARMS (Complex) ---
-      // We need to calculate shoulder position based on torso rotation
-      // Simple approximation: Just use relative offsets rotated by Y
-      
+      // --- 6. HAIR ---
+      // Position hair based on hairstyle
+      let hairScaleX = 1.1;
+      let hairScaleY = 1.0;
+      let hairScaleZ = 1.1;
+      let hairOffsetY = 0.08;
+
+      switch(member.hairStyle) {
+        case 0: // Short hair
+          hairScaleX = 1.05;
+          hairScaleY = 0.6;
+          hairScaleZ = 1.05;
+          hairOffsetY = 0.06;
+          break;
+        case 1: // Medium/curly
+          hairScaleX = 1.2;
+          hairScaleY = 0.9;
+          hairScaleZ = 1.2;
+          hairOffsetY = 0.08;
+          break;
+        case 2: // Long hair
+          hairScaleX = 1.1;
+          hairScaleY = 1.3;
+          hairScaleZ = 1.1;
+          hairOffsetY = 0.05;
+          break;
+        case 3: // Bald/buzz
+          hairScaleX = 0.01;
+          hairScaleY = 0.01;
+          hairScaleZ = 0.01;
+          break;
+      }
+
+      dummy.scale.set(hairScaleX, hairScaleY, hairScaleZ);
+      dummy.position.set(posX, headY + hairOffsetY, posZ);
+      dummy.rotation.set(
+          Math.sin(time * 2 + member.offset) * 0.1,
+          baseRotY + Math.sin(time * 1.5) * 0.2,
+          0
+      );
+      dummy.updateMatrix();
+      hairRef.current!.setMatrixAt(i, dummy.matrix);
+
+      // --- 7. ARMS ---
+      const shoulderWidth = 0.22;
+      const sx = Math.cos(baseRotY) * shoulderWidth;
+      const sz = Math.sin(baseRotY) * shoulderWidth;
+      const shoulderY = torsoY + (torsoHeight / 2) - 0.05; // Near top of torso
+
       // Arm movement intensity
       const armEnergy = isHighEnergy ? 1.5 : 0.5;
       
@@ -202,16 +306,8 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       const leftArmRotZ = Math.PI / 1.1 + Math.sin(time * 3 + member.offset) * armEnergy; 
       const leftArmRotX = Math.sin(time * 2.5 + member.offset) * 0.5;
       
-      // Pivot logic handled by Geometry translation (pivot at top)
-      // We position the "origin" of the arm at the shoulder
-      
-      // Math for shoulder position (offset from center of torso)
-      const shoulderWidth = 0.22;
-      const sx = Math.cos(baseRotY) * shoulderWidth;
-      const sz = Math.sin(baseRotY) * shoulderWidth;
-
-      // Left Arm Update
-      dummy.position.set(torsoPos.x - sx, torsoPos.y + 0.15, torsoPos.z + sz); // Left Shoulder
+      dummy.scale.set(1, 1, 1);
+      dummy.position.set(posX - sx, shoulderY, posZ + sz);
       dummy.rotation.set(torsoRot.x + leftArmRotX, baseRotY, leftArmRotZ);
       dummy.updateMatrix();
       armLRef.current!.setMatrixAt(i, dummy.matrix);
@@ -220,8 +316,7 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       const rightArmRotZ = -Math.PI / 1.1 - Math.sin(time * 3 + member.offset + 1) * armEnergy;
       const rightArmRotX = Math.sin(time * 2.5 + member.offset + 2) * 0.5;
 
-      // Right Arm Update
-      dummy.position.set(torsoPos.x + sx, torsoPos.y + 0.15, torsoPos.z - sz); // Right Shoulder
+      dummy.position.set(posX + sx, shoulderY, posZ - sz);
       dummy.rotation.set(torsoRot.x + rightArmRotX, baseRotY, rightArmRotZ);
       dummy.updateMatrix();
       armRRef.current!.setMatrixAt(i, dummy.matrix);
@@ -229,40 +324,62 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
 
     headRef.current.instanceMatrix.needsUpdate = true;
     torsoRef.current.instanceMatrix.needsUpdate = true;
-    legsRef.current.instanceMatrix.needsUpdate = true;
+    legLRef.current.instanceMatrix.needsUpdate = true;
+    legRRef.current.instanceMatrix.needsUpdate = true;
     armLRef.current.instanceMatrix.needsUpdate = true;
     armRRef.current.instanceMatrix.needsUpdate = true;
+    hairRef.current.instanceMatrix.needsUpdate = true;
+    neckRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
     <group>
-        {/* LEGS: Box (0.28w, 0.9h, 0.18d) */}
-        <instancedMesh ref={legsRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
-            <boxGeometry args={[0.26, 0.9, 0.18]} />
+        {/* LEFT LEG: Capsule for rounded, realistic legs */}
+        <instancedMesh ref={legLRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
+            <capsuleGeometry args={[0.065, 0.75, 4, 8]} />
             <meshStandardMaterial roughness={0.8} />
         </instancedMesh>
 
-        {/* TORSO: Box (0.45w, 0.5h, 0.22d) */}
+        {/* RIGHT LEG */}
+        <instancedMesh ref={legRRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
+            <capsuleGeometry args={[0.065, 0.75, 4, 8]} />
+            <meshStandardMaterial roughness={0.8} />
+        </instancedMesh>
+
+        {/* TORSO: Rounded box for more realistic chest */}
         <instancedMesh ref={torsoRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
-            {/* Tapered torso effect by using a slightly different geometry could be cool, but box is fine for low poly */}
-            <boxGeometry args={[0.42, 0.5, 0.22]} />
-            <meshStandardMaterial roughness={0.6} />
+            <capsuleGeometry args={[0.18, 0.35, 4, 8]} />
+            <meshStandardMaterial roughness={0.7} />
         </instancedMesh>
 
-        {/* HEAD: Sphere (0.22 dia) */}
+        {/* NECK: Small cylinder connecting head to torso */}
+        <instancedMesh ref={neckRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.06, 0.07, 0.15, 8]} />
+            <meshStandardMaterial roughness={0.5} />
+        </instancedMesh>
+
+        {/* HEAD: Sphere with better resolution for realistic head */}
         <instancedMesh ref={headRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
-            <sphereGeometry args={[0.13, 8, 8]} />
-            <meshStandardMaterial roughness={0.4} />
+            <sphereGeometry args={[0.13, 12, 12]} />
+            <meshStandardMaterial roughness={0.5} />
         </instancedMesh>
 
-        {/* LEFT ARM: Box (0.1w, 0.65h, 0.1d) - Pivoted at top */}
-        <instancedMesh ref={armLRef} args={[armGeometry, undefined, MAX_CROWD]} castShadow receiveShadow>
-            <meshStandardMaterial roughness={0.4} />
+        {/* HAIR: Slightly larger sphere positioned on top of head */}
+        <instancedMesh ref={hairRef} args={[undefined, undefined, MAX_CROWD]} castShadow>
+            <sphereGeometry args={[0.14, 10, 10]} />
+            <meshStandardMaterial roughness={0.9} />
+        </instancedMesh>
+
+        {/* LEFT ARM: Capsule for rounded, realistic arms */}
+        <instancedMesh ref={armLRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
+            <capsuleGeometry args={[0.055, 0.55, 4, 8]} />
+            <meshStandardMaterial roughness={0.5} />
         </instancedMesh>
 
         {/* RIGHT ARM */}
-        <instancedMesh ref={armRRef} args={[armGeometry, undefined, MAX_CROWD]} castShadow receiveShadow>
-            <meshStandardMaterial roughness={0.4} />
+        <instancedMesh ref={armRRef} args={[undefined, undefined, MAX_CROWD]} castShadow receiveShadow>
+            <capsuleGeometry args={[0.055, 0.55, 4, 8]} />
+            <meshStandardMaterial roughness={0.5} />
         </instancedMesh>
     </group>
   );

@@ -14,4 +14,6 @@ export interface CrowdMember {
   skinColor: string;
   shirtColor: string;
   pantsColor: string;
+  hairColor: string;
+  hairStyle: number; // 0-3 for different hair styles
 }

@@ -12,25 +12,63 @@ const DEFAULT_VIBE: VibeConfig = {
   description: 'Resident Night',
 };
 
-const LoadingScreen = () => (
-  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-    <div className="text-white font-mono text-sm tracking-widest animate-pulse">
-      LOADING VENUE ASSETS...
+const LoadingScreen = () => {
+  console.log('📦 Loading screen displayed');
+  return (
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#050505',
+      color: 'white',
+      zIndex: 50
+    }}>
+      <div style={{
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        letterSpacing: '0.2em',
+        animation: 'pulse 2s infinite'
+      }}>
+        LOADING VENUE ASSETS...
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const App: React.FC = () => {
-  // State
-  const [crowdDensity, setCrowdDensity] = useState(0.5);
+  console.log('🎨 App component rendering...');
+  
+  // State - Using actual customer count (0-500)
+  const [crowdCount, setCrowdCount] = useState(75);
   const [isBoilerRoomMode, setIsBoilerRoomMode] = useState(true);
   const [brightness, setBrightness] = useState(1.0); // 1.0 = ON, 0.0 = OFF
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
+  // Convert crowd count to density for the Experience component
+  const maxCapacity = 500;
+  const crowdDensity = crowdCount / maxCapacity;
+
+  console.log('🎚️ State:', { crowdCount, crowdDensity, isBoilerRoomMode, brightness, isPanelExpanded });
+
   return (
-    <div className="relative w-full h-full bg-[#050505] text-white font-sans overflow-hidden selection:bg-red-500/30">
+    <div style={{ 
+      position: 'relative', 
+      width: '100%', 
+      height: '100vh', 
+      backgroundColor: '#050505',
+      color: 'white',
+      fontFamily: 'sans-serif',
+      overflow: 'hidden'
+    }}>
       {/* 3D Canvas Container */}
-      <div className="absolute inset-0 z-0">
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        zIndex: 0,
+        backgroundColor: '#050505'
+      }}>
         <Suspense fallback={<LoadingScreen />}>
           <Experience 
             vibe={DEFAULT_VIBE} 
@@ -123,24 +161,24 @@ const App: React.FC = () => {
                     {/* 2. Crowd Density Control */}
                     <div className="relative z-10 mb-6">
                         <div className="flex justify-between items-end mb-3">
-                            <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-300">Occupancy</h2>
+                            <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-300">Capacity</h2>
                             <span className="text-[10px] font-mono text-cyan-400 bg-cyan-900/30 px-2 py-0.5 rounded border border-cyan-500/30">
-                                {(crowdDensity * 100).toFixed(0)}%
+                                {crowdCount} / {maxCapacity}
                             </span>
                         </div>
                         
                         <div className="relative w-full h-2 bg-gray-800/50 rounded-full overflow-hidden group/slider">
                             <div 
                                 className="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-600 to-blue-500 rounded-full transition-all duration-100 ease-linear"
-                                style={{ width: `${crowdDensity * 100}%` }}
+                                style={{ width: `${(crowdCount / maxCapacity) * 100}%` }}
                             />
                             <input 
                                 type="range" 
                                 min="0" 
-                                max="1" 
-                                step="0.05"
-                                value={crowdDensity}
-                                onChange={(e) => setCrowdDensity(parseFloat(e.target.value))}
+                                max={maxCapacity} 
+                                step="10"
+                                value={crowdCount}
+                                onChange={(e) => setCrowdCount(parseInt(e.target.value))}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                         </div>

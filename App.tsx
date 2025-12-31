@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 const Experience = React.lazy(() => import('./components/Experience'));
 import { VibeConfig } from './types';
 
@@ -69,6 +69,24 @@ const App: React.FC = () => {
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [closedSections, setClosedSections] = useState<string[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const ticketUrl = 'https://posh.vip/g/4amwav';
+
+  // Open menu if shared link contains #menu
+  useEffect(() => {
+    if (window.location.hash === '#menu') {
+      setIsMenuOpen(true);
+    }
+  }, []);
+
+  // Keep URL in sync so menu can be shared directly
+  useEffect(() => {
+    const base = `${window.location.pathname}${window.location.search}`;
+    if (isMenuOpen) {
+      window.history.replaceState(null, '', `${base}#menu`);
+    } else if (window.location.hash === '#menu') {
+      window.history.replaceState(null, '', base);
+    }
+  }, [isMenuOpen]);
 
   // Convert crowd count to density for the Experience component
   const maxCapacity = 500;
@@ -119,9 +137,13 @@ const App: React.FC = () => {
                     </p>
                     <div className="flex items-center gap-2 ml-1 mt-1 md:mt-2">
                       <a
-                        href="https://posh.vip/g/4amwav"
+                        href={ticketUrl}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open(ticketUrl, '_blank', 'noopener,noreferrer');
+                        }}
                         className="px-3 py-1 rounded-lg bg-red-600 text-[9px] md:text-[11px] font-bold uppercase tracking-[0.12em] text-white shadow-lg shadow-red-600/40 hover:bg-red-500 transition-colors"
                       >
                         Get Tickets

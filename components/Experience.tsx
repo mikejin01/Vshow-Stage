@@ -277,6 +277,7 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const [isSceneReady, setIsSceneReady] = useState(false);
 
   // Handle window resize for mobile detection and camera adjustment
   useEffect(() => {
@@ -354,6 +355,8 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
           console.log('✅ WebGL Canvas created successfully!', gl);
           const canvas = gl.domElement;
           canvasRef.current = canvas;
+          // Ensure the loading overlay clears after the first frame
+          requestAnimationFrame(() => setIsSceneReady(true));
 
           const handleLost = (event: Event) => {
             event.preventDefault();
@@ -457,6 +460,23 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
         <Environment preset="warehouse" background={false} />
       </Suspense>
       </Canvas>
+      {!isSceneReady && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#050505',
+          color: 'white',
+          fontFamily: 'monospace',
+          fontSize: '14px',
+          letterSpacing: '0.15em',
+          zIndex: 30
+        }}>
+          Loading Venue Assets...
+        </div>
+      )}
     </div>
   );
 };

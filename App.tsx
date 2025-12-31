@@ -132,6 +132,12 @@ const App: React.FC = () => {
                       >
                         Menu
                       </button>
+                      <a
+                        href="tel:+17182338282"
+                        className="px-3 py-1 rounded-lg bg-white/10 text-[9px] md:text-[11px] font-bold uppercase tracking-[0.12em] text-white border border-white/20 hover:bg-white/20 transition-colors"
+                      >
+                        Contact
+                      </a>
                     </div>
                 </div>
             </div>
@@ -299,7 +305,7 @@ const App: React.FC = () => {
             </button>
             <iframe
               title="Menu PDF"
-              src="/Menu.pdf"
+              src={`${import.meta.env.BASE_URL}Menu.pdf`}
               className="w-full h-full border-0 bg-black"
             />
           </div>

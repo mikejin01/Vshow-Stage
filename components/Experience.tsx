@@ -304,10 +304,6 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
   // Camera settings based on device
   const cameraPosition: [number, number, number] = isMobile ? [0, 30, 50] : [0, 15, 30];
   const cameraFov = isMobile ? 45 : 50;
-  const canvasDpr: [number, number] = isMobile ? [0.5, 1] : [0.75, 1.5];
-  const shadowsEnabled = !isMobile; // Skip expensive shadows on mobile
-  const performanceMin = isMobile ? 0.2 : 0.5;
-  const powerPreference = isMobile ? 'low-power' : 'high-performance';
 
   // Separate sizing: keep LED-wall stage larger, boiler-room pad smaller
   // Larger LED-wall stage (next to E1/D10), smaller boiler pad centered on K–N range
@@ -343,16 +339,16 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
         </div>
       )}
       <Canvas 
-        shadows={shadowsEnabled}
-        dpr={canvasDpr}
+        shadows 
+        dpr={[0.75, 1.5]}
         gl={{
-          powerPreference,
+          powerPreference: 'high-performance',
           antialias: false,
           alpha: false,
           stencil: false,
           depth: true,
         }}
-        performance={{ min: performanceMin }}
+        performance={{ min: 0.5 }}
         frameloop="always"
         onCreated={({ gl }) => {
           console.log('✅ WebGL Canvas created successfully!', gl);
@@ -447,17 +443,15 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
             closedSections={closedSections}
           />
 
-      {!isMobile && (
-        <ContactShadows 
-          resolution={256} 
-          scale={40} 
-          blur={1} 
-          opacity={0.4} 
-          far={8} 
-          position={[0, 0.01, 0]}
-          color="#000000" 
-        />
-      )}
+      <ContactShadows 
+        resolution={256} 
+        scale={40} 
+        blur={1} 
+        opacity={0.4} 
+        far={8} 
+        position={[0, 0.01, 0]}
+        color="#000000" 
+      />
         </group>
         
         <Environment preset="warehouse" background={false} />

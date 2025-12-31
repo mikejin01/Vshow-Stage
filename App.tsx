@@ -299,7 +299,7 @@ const App: React.FC = () => {
             </button>
             <iframe
               title="Menu PDF"
-              src="/menu.pdf"
+              src="/Menu.pdf"
               className="w-full h-full border-0 bg-black"
             />
           </div>

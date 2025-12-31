@@ -1,5 +1,5 @@
 import React, { useState, Suspense } from 'react';
-import Experience from './components/Experience';
+const Experience = React.lazy(() => import('./components/Experience'));
 import { VibeConfig } from './types';
 
 // Fixed Vibe Config
@@ -91,14 +91,16 @@ const App: React.FC = () => {
         zIndex: 0,
         backgroundColor: '#050505'
       }}>
-        <Experience 
-          vibe={DEFAULT_VIBE} 
-          crowdDensity={crowdDensity} 
-          isBoilerRoomMode={isBoilerRoomMode}
-          brightness={brightness} 
-          designMode={isDesignMode}
-          closedSections={closedSections}
-        />
+        <Suspense fallback={<LoadingScreen />}>
+          <Experience 
+            vibe={DEFAULT_VIBE} 
+            crowdDensity={crowdDensity} 
+            isBoilerRoomMode={isBoilerRoomMode}
+            brightness={brightness} 
+            designMode={isDesignMode}
+            closedSections={closedSections}
+          />
+        </Suspense>
       </div>
 
       {/* Main UI Overlay - Top Left */}
@@ -110,12 +112,19 @@ const App: React.FC = () => {
                 VSHOW <span className="text-red-600">NYC</span>
                 </h1>
                 <div className="flex md:block gap-2 items-center">
-                    <p className="text-[7px] md:text-[9px] font-mono text-white/50 md:text-white tracking-wide ml-1 mt-1">
-                    Mike Jin
+                    <p className="text-[9px] md:text-[12px] font-mono text-white/80 md:text-white tracking-wide ml-1 mt-1">
+                      Developed by Mike Jin
                     </p>
-                    <p className="text-[7px] md:text-[10px] font-mono text-gray-500 md:text-gray-400 uppercase tracking-[0.1em] md:tracking-[0.3em] ml-1 md:mt-0.5">
-                    Venue Planner v2.0
-                    </p>
+                    <div className="flex items-center gap-2 ml-1 mt-1 md:mt-2">
+                      <a
+                        href="https://posh.vip/g/4amwav"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1 rounded-lg bg-red-600 text-[9px] md:text-[11px] font-bold uppercase tracking-[0.12em] text-white shadow-lg shadow-red-600/40 hover:bg-red-500 transition-colors"
+                      >
+                        Get Tickets
+                      </a>
+                    </div>
                 </div>
             </div>
 

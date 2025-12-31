@@ -303,9 +303,9 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
   const stageRotation: [number, number, number] = [0, Math.PI, 0];
 
   // Camera settings based on device
-  // Mobile: start from a slight side angle to match the desired perspective
-  const cameraPosition: [number, number, number] = isMobile ? [30, 18, 12] : [0, 15, 30];
-  const cameraFov = isMobile ? 45 : 50;
+  // Mobile: start from a broader, side angle and more zoomed out
+  const cameraPosition: [number, number, number] = isMobile ? [45, 24, 28] : [0, 15, 30];
+  const cameraFov = isMobile ? 55 : 50;
 
   // Separate sizing: keep LED-wall stage larger, boiler-room pad smaller
   // Larger LED-wall stage (next to E1/D10), smaller boiler pad centered on K–N range

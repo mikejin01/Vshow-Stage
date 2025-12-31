@@ -60,8 +60,8 @@ const LoadingScreen = () => {
 const App: React.FC = () => {
   console.log('🎨 App component rendering...');
   
-  // State - Using actual customer count (0-300)
-  const [crowdCount, setCrowdCount] = useState(75);
+  // State - Using actual customer count (0-500)
+  const [crowdCount, setCrowdCount] = useState(0);
   const [isBoilerRoomMode, setIsBoilerRoomMode] = useState(true);
   const brightness = 1.0; // Set to bright mode so venue is visible
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
@@ -69,7 +69,7 @@ const App: React.FC = () => {
   const [closedSections, setClosedSections] = useState<string[]>([]);
 
   // Convert crowd count to density for the Experience component
-  const maxCapacity = 300;
+  const maxCapacity = 500;
   const crowdDensity = crowdCount / maxCapacity;
 
   console.log('🎚️ State:', { crowdCount, crowdDensity, isBoilerRoomMode, brightness, isPanelExpanded });
@@ -91,16 +91,14 @@ const App: React.FC = () => {
         zIndex: 0,
         backgroundColor: '#050505'
       }}>
-        <Suspense fallback={<LoadingScreen />}>
-          <Experience 
-            vibe={DEFAULT_VIBE} 
-            crowdDensity={crowdDensity} 
-            isBoilerRoomMode={isBoilerRoomMode}
-            brightness={brightness} 
-            designMode={isDesignMode}
-            closedSections={closedSections}
-          />
-        </Suspense>
+        <Experience 
+          vibe={DEFAULT_VIBE} 
+          crowdDensity={crowdDensity} 
+          isBoilerRoomMode={isBoilerRoomMode}
+          brightness={brightness} 
+          designMode={isDesignMode}
+          closedSections={closedSections}
+        />
       </div>
 
       {/* Main UI Overlay - Top Left */}

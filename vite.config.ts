@@ -4,7 +4,7 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/Vshow-Stage/', // Required for GitHub Pages
+  base: '/', // Changed for local development
   server: {
     port: 3000,
     host: true,

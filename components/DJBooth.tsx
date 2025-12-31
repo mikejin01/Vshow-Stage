@@ -28,7 +28,7 @@ const DJCharacter: React.FC = () => {
     });
 
     return (
-        <group ref={groupRef} position={[0, 0.1, 0.6]}>
+        <group ref={groupRef} position={[0, 0.1, 0.6]} scale={1.15}>
             {/* Legs */}
             <Box args={[0.15, 0.9, 0.15]} position={[-0.2, 0.45, 0]}>
                 <meshStandardMaterial color="#111" />

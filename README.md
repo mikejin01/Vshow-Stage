@@ -15,7 +15,7 @@ An interactive 3D venue planning and visualization application built with React,
 - **Dynamic Crowd Simulation**: Adjust crowd density from 0-100% with realistic animated crowd members
 - **Advanced Lighting System**: Control house lights and experience dynamic vibe-based lighting effects
 - **Responsive 3D Controls**: Orbit, zoom, and pan around the venue with smooth camera controls
-- **Performance Optimized**: Instanced rendering for handling 300 animated crowd members efficiently
+- **Performance Optimized**: Instanced rendering for handling 500 animated crowd members efficiently
 
 ## 🚀 Quick Start
 
@@ -123,7 +123,7 @@ Vshow-Stage/
 
 ### Crowd Simulation
 
-- Up to 300 individually animated crowd members
+- Up to 500 individually animated crowd members
 - Intelligent collision avoidance (stage, furniture, walls)
 - Realistic dancing animations with:
   - Vertical bouncing synchronized to vibe intensity
@@ -140,7 +140,7 @@ Vshow-Stage/
 
 ### Performance Optimizations
 
-- Instanced mesh rendering for crowd (5 meshes for 300 people vs 1500 individual meshes)
+- Instanced mesh rendering for crowd (5 meshes for 500 people vs 2500 individual meshes)
 - Optimized shadow casting and receiving
 - Reduced anti-aliasing (dpr: 1-1.5)
 - WebGL context loss handling

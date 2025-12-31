@@ -11,7 +11,7 @@ interface CrowdProps {
   closedSections: string[];
 }
 
-const MAX_CROWD = 300;
+const MAX_CROWD = 500;
 
 // --- PALETTES ---
 const SKIN_TONES = [
@@ -237,14 +237,14 @@ const Crowd: React.FC<CrowdProps> = ({ density, vibeIntensity, stageRadius, isBo
       legRRef.current!.setColorAt(i, colorHelper);
     });
 
-    headRef.current.instanceColor!.needsUpdate = true;
-    torsoRef.current.instanceColor!.needsUpdate = true;
-    legLRef.current.instanceColor!.needsUpdate = true;
-    legRRef.current.instanceColor!.needsUpdate = true;
-    armLRef.current.instanceColor!.needsUpdate = true;
-    armRRef.current.instanceColor!.needsUpdate = true;
-    hairRef.current.instanceColor!.needsUpdate = true;
-    neckRef.current.instanceColor!.needsUpdate = true;
+    if (headRef.current && headRef.current.instanceColor) headRef.current.instanceColor.needsUpdate = true;
+    if (torsoRef.current && torsoRef.current.instanceColor) torsoRef.current.instanceColor.needsUpdate = true;
+    if (legLRef.current && legLRef.current.instanceColor) legLRef.current.instanceColor.needsUpdate = true;
+    if (legRRef.current && legRRef.current.instanceColor) legRRef.current.instanceColor.needsUpdate = true;
+    if (armLRef.current && armLRef.current.instanceColor) armLRef.current.instanceColor.needsUpdate = true;
+    if (armRRef.current && armRRef.current.instanceColor) armRRef.current.instanceColor.needsUpdate = true;
+    if (hairRef.current && hairRef.current.instanceColor) hairRef.current.instanceColor.needsUpdate = true;
+    if (neckRef.current && neckRef.current.instanceColor) neckRef.current.instanceColor.needsUpdate = true;
   }, [crowdData, colorHelper]);
 
   // ANIMATION LOOP

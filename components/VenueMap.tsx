@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Cylinder, Text, RoundedBox, Sphere, Line } from '@react-three/drei';
+import { Box, Cylinder, Text, RoundedBox, Sphere, Line, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
 // --- CONSTANTS & TYPES ---
@@ -257,18 +257,25 @@ const LuxuryBooth: React.FC<BoothProps> = ({
       <ModernTable width={width * 0.5} depth={depth * 0.5} height={0.55} fancy={isShowcase} />
 
       {label && (
-        <Text 
-            position={[0, 2.5, 0]} 
-            fontSize={0.6} 
-            color={color}
-            anchorX="center" 
-            anchorY="middle"
-            outlineWidth={0.015}
-            outlineColor="#000000"
-            fontWeight={700}
+        <Billboard
+            position={[0, 2.5, 0]}
+            follow={true}
+            lockX={false}
+            lockY={false}
+            lockZ={false}
         >
-            {label}
-        </Text>
+            <Text 
+                fontSize={0.7} 
+                color={color}
+                anchorX="center" 
+                anchorY="middle"
+                outlineWidth={0.02}
+                outlineColor="#000000"
+                fontWeight={700}
+            >
+                {label}
+            </Text>
+        </Billboard>
       )}
     </group>
   );
@@ -527,21 +534,23 @@ const BarArea: React.FC<{ occupancy: number }> = ({ occupancy }) => {
                 })}
             </group>
 
-            {/* BAR Label - Horizontal above the bar */}
-            <Text 
-                position={[0, 3.0, 0]} 
-                rotation={[0, 0, 0]} 
-                color={COLORS.BAR} 
-                fontSize={0.6} 
-                letterSpacing={0.2}
-                anchorX="center" 
-                anchorY="middle"
-                outlineWidth={0.015}
-                outlineColor="#000000"
-                fontWeight={700}
+            {/* BAR Label - Always facing camera */}
+            <Billboard
+                position={[0, 3.0, 0]}
             >
-                BAR
-            </Text>
+                <Text 
+                    color={COLORS.BAR} 
+                    fontSize={0.8} 
+                    letterSpacing={0.2}
+                    anchorX="center" 
+                    anchorY="middle"
+                    outlineWidth={0.02}
+                    outlineColor="#000000"
+                    fontWeight={700}
+                >
+                    BAR
+                </Text>
+            </Billboard>
             
             {/* BARTENDERS - In the space between counter and shelf (2 bartenders) */}
             {[-3, 3].map((zPos, idx) => (

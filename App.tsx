@@ -106,7 +106,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Main UI Overlay - Top Left */}
-      <div className="absolute inset-x-0 bottom-0 md:top-0 md:bottom-auto md:left-0 p-3 md:p-8 z-10 w-full max-w-sm pointer-events-none">
+      <div className="absolute inset-x-0 bottom-0 md:top-0 md:bottom-auto md:left-0 p-3 pb-[calc(env(safe-area-inset-bottom)+16px)] md:p-8 md:pb-8 z-10 w-full max-w-sm pointer-events-none">
         <div className="pointer-events-auto">
             {/* Header */}
             <div className="mb-4 md:mb-8">

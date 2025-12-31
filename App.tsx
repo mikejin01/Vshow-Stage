@@ -131,7 +131,7 @@ const App: React.FC = () => {
                 <h1 className="text-3xl md:text-5xl font-black tracking-tighter italic mb-1 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                 VSHOW <span className="text-red-600">NYC</span>
                 </h1>
-                <div className="flex md:block gap-2 items-center">
+                <div className="flex flex-col md:block gap-1 md:gap-2 items-start md:items-center">
                     <p className="text-[9px] md:text-[12px] font-mono text-white/80 md:text-white tracking-wide ml-1 mt-1">
                       Developed by Mike Jin
                     </p>
@@ -158,7 +158,7 @@ const App: React.FC = () => {
                         href="tel:+17182338282"
                         className="px-3 py-1 rounded-lg bg-white/10 text-[9px] md:text-[11px] font-bold uppercase tracking-[0.12em] text-white border border-white/20 hover:bg-white/20 transition-colors"
                       >
-                        Contact
+                        Call
                       </a>
                     </div>
                 </div>

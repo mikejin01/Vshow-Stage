@@ -53,6 +53,7 @@ const LoadingScreen = () => {
       }}>
         LOADING VENUE ASSETS...
       </div>
+
     </div>
   );
 };
@@ -67,6 +68,7 @@ const App: React.FC = () => {
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [closedSections, setClosedSections] = useState<string[]>([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Convert crowd count to density for the Experience component
   const maxCapacity = 500;
@@ -124,6 +126,12 @@ const App: React.FC = () => {
                       >
                         Get Tickets
                       </a>
+                      <button
+                        onClick={() => setIsMenuOpen(true)}
+                        className="px-3 py-1 rounded-lg bg-white/10 text-[9px] md:text-[11px] font-bold uppercase tracking-[0.12em] text-white border border-white/20 hover:bg-white/20 transition-colors"
+                      >
+                        Menu
+                      </button>
                     </div>
                 </div>
             </div>
@@ -277,6 +285,26 @@ const App: React.FC = () => {
             </div>
         </div>
       </div>
+
+      {/* Menu PDF Viewer */}
+      {isMenuOpen && (
+        <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full h-full md:h-[90vh] md:w-[90vw] bg-black border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="absolute top-3 right-3 z-10 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg border border-white/20"
+              aria-label="Close menu"
+            >
+              Close
+            </button>
+            <iframe
+              title="Menu PDF"
+              src="/menu.pdf"
+              className="w-full h-full border-0 bg-black"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

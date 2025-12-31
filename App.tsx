@@ -64,7 +64,7 @@ const App: React.FC = () => {
   const [crowdCount, setCrowdCount] = useState(0);
   const [isBoilerRoomMode, setIsBoilerRoomMode] = useState(true);
   const brightness = 1.0; // Set to bright mode so venue is visible
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [closedSections, setClosedSections] = useState<string[]>([]);
 
@@ -102,7 +102,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Main UI Overlay - Top Left */}
-      <div className="absolute top-0 left-0 p-3 md:p-8 z-10 w-full max-w-sm pointer-events-none">
+      <div className="absolute inset-x-0 bottom-0 md:top-0 md:bottom-auto md:left-0 p-3 md:p-8 z-10 w-full max-w-sm pointer-events-none">
         <div className="pointer-events-auto">
             {/* Header */}
             <div className="mb-4 md:mb-8">

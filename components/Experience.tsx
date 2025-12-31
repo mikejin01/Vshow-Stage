@@ -303,7 +303,8 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
   const stageRotation: [number, number, number] = [0, Math.PI, 0];
 
   // Camera settings based on device
-  const cameraPosition: [number, number, number] = isMobile ? [0, 30, 50] : [0, 15, 30];
+  // Mobile: start from a slight side angle to match the desired perspective
+  const cameraPosition: [number, number, number] = isMobile ? [30, 18, 12] : [0, 15, 30];
   const cameraFov = isMobile ? 45 : 50;
 
   // Separate sizing: keep LED-wall stage larger, boiler-room pad smaller
@@ -395,7 +396,7 @@ const Experience: React.FC<ExperienceProps> = ({ vibe, crowdDensity, isBoilerRoo
         dampingFactor={0.05}
         rotateSpeed={0.5}
         zoomSpeed={0.8}
-        target={[0, 0, 0]} 
+        target={stagePosition} 
       />
 
       <Lights vibe={vibe} targetPosition={stagePosition} brightness={brightness} />

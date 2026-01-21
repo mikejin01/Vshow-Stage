@@ -1,5 +1,7 @@
 # VSHOW NYC - Venue Planner
 
+LIVE Preview: https://mikejin01.github.io/Vshow-Stage/
+
 An interactive 3D venue planning and visualization application built with React, Three.js, and Vite.
 
 ![VSHOW NYC](https://img.shields.io/badge/VSHOW-NYC-red)
